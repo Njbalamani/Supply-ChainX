@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+{% block title %}Documentation{% endblock %}
+{% block page_title %}Platform Documentation{% endblock %}
+{% block content %}
+<div class="grid grid-3">
+  <a class="card" href="{% url 'docs:architecture' %}"><span class="label">01 · DESIGN</span><h3 class="card-title">System Architecture</h3><p class="card-sub">Scan pipeline, modules, queues and security boundaries.</p></a>
+  <a class="card" href="{% url 'docs:er_diagram' %}"><span class="label">02 · DATA</span><h3 class="card-title">Database ER Diagram</h3><p class="card-sub">Entity relationships across all twelve Django apps.</p></a>
+  <a class="card" href="{% url 'docs:api' %}"><span class="label">03 · API</span><h3 class="card-title">REST API Guide</h3><p class="card-sub">Authentication, endpoints and OpenAPI schema.</p></a>
+</div>
+<section class="card prose" style="margin-top:18px">
+  <h2>SupplyChainX</h2>
+  <p>SupplyChainX is an enterprise software supply-chain security intelligence platform. It builds CycloneDX SBOMs from uploaded source archives, queries real vulnerability intelligence sources, analyses transitive dependency risk with NetworkX, and presents prioritized remediation guidance.</p>
+  <h3>Trust principles</h3>
+  <ul>
+    <li><strong>No code execution:</strong> uploaded archives are only read as data; contained source is never run.</li>
+    <li><strong>No fabricated advisories:</strong> CVE/GHSA findings come from live OSV.dev queries, optionally enriched by NVD. Source attribution is stored per finding.</li>
+    <li><strong>Tenant isolation:</strong> all project data is scoped to organization membership.</li>
+    <li><strong>Auditable output:</strong> SBOM JSON, vulnerability CSV, PDF reports and source-status logs are reproducible per scan.</li>
+  </ul>
+  <h3>Quick start</h3>
+  <p>Create an organization, register a project, upload a ZIP containing <code>requirements.txt</code>, <code>package.json</code>/<code>package-lock.json</code> or <code>pom.xml</code>, then open the resulting scan to review findings.</p>
+</section>
+{% endblock %}

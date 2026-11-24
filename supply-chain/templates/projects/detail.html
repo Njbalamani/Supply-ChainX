@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+{% block title %}{{ project.name }}{% endblock %}
+{% block page_title %}{{ project.name }}{% endblock %}
+{% block content %}
+<div class="crumb"><a href="{% url 'projects:list' %}">Projects</a> <span>/</span> <span>{{ project.organization.name }}</span> <span>/</span> <span>{{ project.name }}</span></div>
+<div class="detail-head">
+  <div><h2>{{ project.name }}</h2><p>{{ project.description|default:"No description provided." }}</p></div>
+  <span class="tag">{{ project.get_ecosystem_display }}</span>
+</div>
+
+<div class="grid grid-hero">
+  <section class="card">
+    <div class="card-header"><div><h3 class="card-title">Launch a scan</h3><p class="card-sub">ZIP archives are validated and statically analysed only.</p></div></div>
+    {% if can_scan %}
+    <form method="post" action="{% url 'projects:upload' project.pk %}" enctype="multipart/form-data">
+      {% csrf_token %}
+      <div class="field"><label for="{{ upload_form.archive.id_for_label }}">Source archive (.zip)</label>{{ upload_form.archive }}
+        <span class="help">Limits: 100 MB compressed, 250 MB uncompressed, 5,000 files. Symlinks and path traversal are rejected.</span>
+        {% for error in upload_form.archive.errors %}<span class="form-errors">{{ error }}</span>{% endfor %}</div>
+      <button class="gold-button" type="submit">Upload &amp; scan</button>
+    </form>
+    {% else %}<div class="empty">Your organization role does not permit uploads.</div>{% endif %}
+  </section>
+  <section class="card">
+    <div class="card-header"><h3 class="card-title">Project metadata</h3></div>
+    <dl class="kv">
+      <dt>Organization</dt><dd>{{ project.organization.name }}</dd>
+      <dt>Ecosystem</dt><dd>{{ project.get_ecosystem_display }}</dd>
+      <dt>Repository</dt><dd>{{ project.repository_url|default:"—" }}</dd>
+      <dt>Created by</dt><dd>{{ project.created_by.username }}</dd>
+      <dt>Created</dt><dd>{{ project.created_at|date:"M d, Y H:i" }}</dd>
+      <dt>Total scans</dt><dd>{{ project.scans.count }}</dd>
+    </dl>
+  </section>
+</div>
+
+<section class="card" style="margin-top:18px">
+  <div class="card-header"><div><h3 class="card-title">Scan history</h3><p class="card-sub">All assessments for this project</p></div></div>
+  {% if scans %}
+  <div class="table-wrap"><table class="data"><thead><tr><th>Scan</th><th>Status</th><th>Dependencies</th><th>Findings</th><th>Risk</th><th>Started</th><th></th></tr></thead><tbody>
+    {% for scan in scans %}
+    <tr><td><strong>#{{ scan.pk }}</strong></td><td><span class="tag {{ scan.status|lower }}">{{ scan.status }}</span></td><td>{{ scan.summary.dependencies_discovered|default:"—" }}</td><td>{{ scan.summary.vulnerabilities.total|default:"—" }}</td><td>{{ scan.risk_score }}</td><td>{{ scan.created_at|date:"M d, H:i" }}</td><td><a class="ghost-button small" href="{% url 'scans:detail' scan.pk %}">Inspect</a></td></tr>
+    {% endfor %}
+  </tbody></table></div>
+  {% else %}<div class="empty">No scans have been executed for this project.</div>{% endif %}
+</section>
+{% endblock %}

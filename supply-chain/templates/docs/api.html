@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% block title %}API Guide{% endblock %}
+{% block page_title %}REST API Guide{% endblock %}
+{% block content %}
+<section class="card prose">
+  <h2>Authentication</h2>
+  <p>Obtain a DRF token, then send it as <code>Authorization: Token &lt;token&gt;</code>.</p>
+  <div class="code-block">curl -X POST http://localhost:8000/api/auth/token/ \
+  -d "username=analyst&amp;password=your-password"</div>
+  <h3>Core endpoints</h3>
+  <table class="data"><thead><tr><th>Method</th><th>Endpoint</th><th>Description</th></tr></thead><tbody>
+    <tr><td>GET/POST</td><td><code>/api/organizations/</code></td><td>List or create organizations.</td></tr>
+    <tr><td>POST</td><td><code>/api/projects/{id}/upload/</code></td><td>Multipart upload of a source ZIP; creates and queues a scan.</td></tr>
+    <tr><td>POST</td><td><code>/api/scans/{id}/queue/</code></td><td>Re-queue a pending or failed scan.</td></tr>
+    <tr><td>GET</td><td><code>/api/scans/{id}/summary/</code></td><td>Risk, health, graph and license summary.</td></tr>
+    <tr><td>GET</td><td><code>/api/dependencies/</code></td><td>Parsed components with purls and source manifests.</td></tr>
+    <tr><td>GET</td><td><code>/api/vulnerabilities/</code></td><td>Advisory findings with source attribution.</td></tr>
+    <tr><td>GET</td><td><code>/api/recommendations/</code></td><td>Grounded remediation guidance.</td></tr>
+    <tr><td>GET</td><td><code>/api/intel-sources/</code></td><td>Health of OSV, NVD and optional local tools.</td></tr>
+    <tr><td>GET</td><td><code>/api/dashboard/summary/</code></td><td>Aggregate security posture for the current user.</td></tr>
+  </tbody></table>
+  <h3>Machine-readable schema</h3>
+  <p>The complete OpenAPI document is available at <a href="/api/schema/"><code>/api/schema/</code></a>. All list endpoints are paginated (25 items per page) and scoped by organization membership.</p>
+  <h3>Exports</h3>
+  <p>Authenticated HTML views provide <code>/reports/scans/&lt;id&gt;/report.pdf/</code>, <code>/reports/scans/&lt;id&gt;/vulnerabilities.csv/</code>, <code>/reports/scans/&lt;id&gt;/sbom.json/</code> and <code>/reports/scans/&lt;id&gt;/graph.json/</code>.</p>
+</section>
+{% endblock %}

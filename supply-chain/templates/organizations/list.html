@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+{% block title %}Organizations{% endblock %}
+{% block page_title %}Organizations{% endblock %}
+{% block content %}
+<div class="section-head"><div><h2>Your organizations</h2><p> Tenant boundaries for projects, members and role-based access.</p></div><a class="gold-button" href="{% url 'organizations:create' %}">New organization</a></div>
+<div class="grid grid-3">
+  {% for org in organizations %}
+  <a class="card" href="{% url 'organizations:detail' org.pk %}">
+    <div class="metric-top"><span class="metric-label">{{ org.slug }}</span><span class="metric-icon"><svg viewBox="0 0 24 24"><path d="M12 3 2 8v13h20V8L12 3Zm0 2.2 6 3V19H6V8.2l6-3Z"/></svg></span></div>
+    <span class="metric-value" style="font-size:20px">{{ org.name }}</span>
+    <p class="card-sub">{{ org.description|truncatechars:90|default:"No description" }}</p>
+    <div class="mini-row"><span>{{ org.memberships.count }} members</span><span>{{ org.projects.count }} projects</span></div>
+  </a>
+  {% empty %}<div class="card empty">No organizations yet. Create one to start registering projects.</div>{% endfor %}
+</div>
+{% endblock %}

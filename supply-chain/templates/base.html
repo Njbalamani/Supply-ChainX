@@ -1,0 +1,107 @@
+{% load static %}<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#080a0f">
+  <title>{% block title %}SupplyChainX{% endblock %} · Security Intelligence</title>
+  <link rel="stylesheet" href="{% static 'css/main.css' %}">
+  {% block head %}{% endblock %}
+</head>
+<body class="scx-body">
+  <div class="ambient ambient-a"></div>
+  <div class="ambient ambient-b"></div>
+  <div class="grid-overlay"></div>
+
+  <div class="shell">
+    <aside class="sidebar" id="sidebar">
+      <a class="brand" href="{% url 'dashboard:home' %}">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 48 48" fill="none"><path d="M24 3 42 12v13c0 11-7.4 17.3-18 20C13.4 42.3 6 36 6 25V12L24 3Z" stroke="currentColor" stroke-width="2"/><path d="M16 24l5.5 5.5L33 18" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </span>
+        <span class="brand-text"><strong>SUPPLY<span>CHAIN</span>X</strong><small>Security Intelligence</small></span>
+      </a>
+
+      <nav class="nav" aria-label="Primary navigation">
+        <p class="nav-label">Command Center</p>
+        <a class="nav-item {% if request.resolver_match.url_name == 'home' %}active{% endif %}" href="{% url 'dashboard:home' %}">
+          <svg viewBox="0 0 24 24"><path d="M4 13h6V4H4v9Zm0 7h6v-5H4v5Zm10 0h6v-9h-6v9Zm0-16v5h6V4h-6Z"/></svg>
+          <span>Overview</span>
+        </a>
+        <a class="nav-item {% if request.resolver_match.app_name == 'projects' %}active{% endif %}" href="{% url 'projects:list' %}">
+          <svg viewBox="0 0 24 24"><path d="M3 7h6l2 2h10v10H3V7Zm0 4h18v6H3v-6Z"/></svg>
+          <span>Projects</span><span class="nav-badge">SCAN</span>
+        </a>
+        <a class="nav-item {% if request.resolver_match.app_name == 'organizations' %}active{% endif %}" href="{% url 'organizations:list' %}">
+          <svg viewBox="0 0 24 24"><path d="M12 3 2 8v13h20V8L12 3Zm0 2.2 6 3V19H6V8.2l6-3ZM9 11h2v2H9v-2Zm4 0h2v2h-2v-2Zm-4 4h2v2H9v-2Zm4 0h2v2h-2v-2Z"/></svg>
+          <span>Organizations</span>
+        </a>
+        <p class="nav-label">Intelligence</p>
+        <a class="nav-item" href="{% url 'docs:index' %}">
+          <svg viewBox="0 0 24 24"><path d="M5 3h9l5 5v13H5V3Zm8 2v4h4M8 12h8v2H8v-2Zm0 4h6v2H8v-2Z"/></svg>
+          <span>Documentation</span>
+        </a>
+        <a class="nav-item" href="/api/schema/">
+          <svg viewBox="0 0 24 24"><path d="m8 5-6 7 6 7 1.5-1.5L5 12l4.5-5.5L8 5Zm8 0-1.5 1.5L19 12l-4.5 5.5L16 19l6-7-6-7Z"/></svg>
+          <span>API Reference</span>
+        </a>
+        {% if request.user.is_staff %}
+        <p class="nav-label">Administration</p>
+        <a class="nav-item" href="{% url 'admin:index' %}">
+          <svg viewBox="0 0 24 24"><path d="M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8Zm9 4-2.1-.8a7 7 0 0 0-.6-1.4l.9-2-2-2-2 .9a7 7 0 0 0-1.4-.6L13 4h-2l-.8 2.1a7 7 0 0 0-1.4.6l-2-.9-2 2 .9 2a7 7 0 0 0-.6 1.4L4 12l2.1.8a7 7 0 0 0 .6 1.4l-.9 2 2 2 2-.9a7 7 0 0 0 1.4.6L12 20h2l.8-2.1a7 7 0 0 0 1.4-.6l2 .9 2-2-.9-2a7 7 0 0 0 .6-1.4L21 12Z"/></svg>
+          <span>Django Admin</span>
+        </a>
+        {% endif %}
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="intel-status"><span class="pulse-dot"></span><span>Threat intel ready</span></div>
+        <p>Enterprise Edition · v1.0.0</p>
+      </div>
+    </aside>
+
+    <div class="workspace">
+      <header class="topbar">
+        <button class="icon-button menu-toggle" id="menuToggle" aria-label="Toggle navigation">
+          <svg viewBox="0 0 24 24"><path d="M4 6h16v2H4V6Zm0 5h16v2H4v-2Zm0 5h16v2H4v-2Z"/></svg>
+        </button>
+        <div class="topbar-title">
+          <span class="eyebrow">SECURITY POSTURE</span>
+          <h1>{% block page_title %}Security Dashboard{% endblock %}</h1>
+        </div>
+        <div class="topbar-actions">
+          <span class="source-chip" title="Vulnerability data is queried from live upstream sources">OSV · NVD</span>
+          {% if request.user.is_authenticated %}
+          <div class="user-chip">
+            <span class="avatar">{{ request.user.username|slice:":1"|upper }}</span>
+            <span class="user-meta"><strong>{{ request.user.username }}</strong><small>{{ request.user.get_role_display|default:request.user.role }}</small></span>
+          </div>
+          <form method="post" action="{% url 'accounts:logout' %}">{% csrf_token %}<button class="ghost-button" type="submit">Sign out</button></form>
+          {% else %}
+          <a class="gold-button small" href="{% url 'accounts:login' %}">Sign in</a>
+          {% endif %}
+        </div>
+      </header>
+
+      <main class="content">
+        {% if messages %}
+          <div class="messages">
+            {% for message in messages %}<div class="alert {{ message.tags }}">{{ message }}</div>{% endfor %}
+          </div>
+        {% endif %}
+        {% block content %}{% endblock %}
+      </main>
+
+      <footer class="footer">
+        <span>SUPPLYCHAINX · Software Supply Chain Security Intelligence</span>
+        <span>Advisory data: OSV.dev / NVD · Static analysis only</span>
+      </footer>
+    </div>
+  </div>
+
+  <script src="{% static 'vendor/three.min.js' %}"></script>
+  <script src="{% static 'vendor/chart.umd.min.js' %}"></script>
+  <script src="{% static 'js/app.js' %}"></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

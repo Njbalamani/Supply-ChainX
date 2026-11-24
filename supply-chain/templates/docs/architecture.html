@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% block title %}Architecture{% endblock %}
+{% block page_title %}System Architecture{% endblock %}
+{% block content %}
+<section class="card prose">
+  <h2>Architecture overview</h2>
+  <p>SupplyChainX follows Django MVT architecture with a service layer for analysis and Celery for background execution. The web process never executes uploaded code; all parsing is deterministic and all extraction is constrained.</p>
+  <div class="flow">
+    <span class="flow-node">Upload ZIP</span><span class="flow-arrow">→</span>
+    <span class="flow-node">Validate archive</span><span class="flow-arrow">→</span>
+    <span class="flow-node">Parse manifests</span><span class="flow-arrow">→</span>
+    <span class="flow-node">OSV / NVD</span><span class="flow-arrow">→</span>
+    <span class="flow-node">Graph + SBOM</span><span class="flow-arrow">→</span>
+    <span class="flow-node">Reports</span>
+  </div>
+  <h3>Layers</h3>
+  <table class="data"><thead><tr><th>Layer</th><th>Apps / components</th><th>Responsibility</th></tr></thead><tbody>
+    <tr><td>Presentation</td><td>templates/, static/, Three.js, Chart.js</td><td>Enterprise UI, 3D dependency graph, dashboards and reports.</td></tr>
+    <tr><td>Application</td><td>accounts, organizations, projects</td><td>Identity, RBAC, tenants, project registry, scan lifecycle.</td></tr>
+    <tr><td>Analysis</td><td>dependency_parser, sbom_generator, vulnerability_scanner, cve_intelligence, dependency_graph, license_compliance, ai_recommendations</td><td>Deterministic parsing, advisory matching, risk scoring, recommendations.</td></tr>
+    <tr><td>Delivery</td><td>reports, dashboard, config/api_urls.py</td><td>PDF/CSV/SBOM exports, metrics, DRF API and OpenAPI schema.</td></tr>
+    <tr><td>Infrastructure</td><td>PostgreSQL, Redis, Celery, WhiteNoise</td><td>Durable storage, background jobs, static asset delivery.</td></tr>
+  </tbody></table>
+  <h3>Scan pipeline</h3>
+  <ol>
+    <li><code>ProjectUploadView</code> validates the ZIP structure (size, count, traversal, symlinks, compression ratio) and stores it with a SHA-256 digest.</li>
+    <li><code>dispatch_scan</code> queues a Celery task; if Redis is unavailable, a daemon thread executes the same task.</li>
+    <li><code>run_scan</code> reads manifests in memory, de-duplicates dependencies and persists <code>ParsedDependency</code> rows.</li>
+    <li>OSV batch queries run for exact versions. CVE aliases are enriched from NVD when enabled. Optional pip-audit and gitleaks CLIs add second-opinion evidence.</li>
+    <li>License records, NetworkX graph metrics, risk signals, a CycloneDX 1.5 SBOM and grounded recommendations are generated.</li>
+    <li>The scan is finalized with risk/health scores and complete source attribution.</li>
+  </ol>
+  <h3>Security boundaries</h3>
+  <ul>
+    <li>Archive entries with absolute paths, <code>..</code> segments, symlinks or encryption are rejected.</li>
+    <li>XML manifests are parsed with defusedxml; DTD/ENTITY declarations are rejected.</li>
+    <li>External API calls use bounded timeouts and record success/failure in <code>IntelSourceStatus</code>.</li>
+    <li>LLM recommendations are optional and grounded in scan facts; the deterministic rule engine is the default.</li>
+  </ul>
+</section>
+{% endblock %}

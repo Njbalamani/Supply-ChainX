@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% block title %}ER Diagram{% endblock %}
+{% block page_title %}Database ER Diagram{% endblock %}
+{% block content %}
+<section class="card prose">
+  <h2>Entity relationships</h2>
+  <p>PostgreSQL is the production database. The diagram below shows the core relationships; every scan is the central aggregate for analysis artefacts.</p>
+  <div class="code-block" style="max-height:none">
+Organization (1) ────< (N) OrganizationMember (N) >──── (1) User
+Organization (1) ────< (N) Project
+User (1) ───────────< (N) Project.created_by
+User (1) ───────────< (N) Scan.triggered_by
+
+Project (1) ────────< (N) ProjectArchive
+Project (1) ────────< (N) Scan
+Scan (1) ───────────< (N) ParsedDependency
+Scan (1) ───────────< (N) Vulnerability ──(N:1)──> ParsedDependency
+Scan (1) ──────────── (1) SBOM
+Scan (1) ──────────── (1) GraphMetric
+Scan (1) ───────────< (N) DependencyEdge
+Scan (1) ───────────< (N) RiskSignal ──(N:1)──> ParsedDependency
+Scan (1) ───────────< (N) LicenseRecord ──(N:1)──> ParsedDependency
+Scan (1) ──────────── (1) LicenseReport
+Scan (1) ───────────< (N) Recommendation ──(N:1)──> Vulnerability / ParsedDependency
+Scan (1) ───────────< (N) SecretFinding
+Scan (1) ───────────< (N) Report
+
+CVERecord (global, unique cve_id) · IntelSourceStatus (global source health)
+  </div>
+  <h3>Key constraints</h3>
+  <ul>
+    <li><code>Organization.name</code> and <code>(organization, name)</code> for projects are unique.</li>
+    <li><code>(organization, user)</code> membership is unique; roles are OWNER / ADMIN / MEMBER / VIEWER.</li>
+    <li><code>(scan, vuln_id, dependency, package_version)</code> prevents duplicate advisory findings.</li>
+    <li><code>(scan, package_name, version)</code> prevents duplicate license records.</li>
+    <li><code>(scan, source, target, edge_type)</code> prevents duplicate graph edges.</li>
+  </ul>
+  <h3>Retention</h3>
+  <p>Archives are retained for reproducibility and can be deleted through the maintenance Celery task. Reports are stored under <code>media/reports/</code> with a SHA-256 checksum recorded on each <code>Report</code>.</p>
+</section>
+{% endblock %}

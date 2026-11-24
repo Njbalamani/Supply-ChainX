@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% block title %}New organization{% endblock %}
+{% block page_title %}Create Organization{% endblock %}
+{% block content %}
+<div class="grid grid-2">
+  <section class="card">
+    <div class="card-header"><h3 class="card-title">Organization profile</h3><p class="card-sub">You will be assigned the Owner role.</p></div>
+    <form method="post">{% csrf_token %}
+      {% for field in form %}<div class="field"><label for="{{ field.id_for_label }}">{{ field.label }}</label>{{ field }}{% for error in field.errors %}<span class="form-errors">{{ error }}</span>{% endfor %}</div>{% endfor %}
+      <button class="gold-button" type="submit">Create organization</button>
+    </form>
+  </section>
+  <section class="card prose"><h3>Tenant isolation</h3><p>Organizations scope projects, scans, findings and API responses. Members can view; owners and admins can modify.</p></section>
+</div>
+{% endblock %}

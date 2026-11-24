@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+{% block title %}Scan #{{ scan.pk }}{% endblock %}
+{% block page_title %}Scan Assessment #{{ scan.pk }}{% endblock %}
+{% block content %}
+<div class="crumb"><a href="{% url 'projects:list' %}">Projects</a> <span>/</span> <a href="{% url 'projects:detail' scan.project.pk %}">{{ scan.project.name }}</a> <span>/</span> <span>Scan #{{ scan.pk }}</span></div>
+
+<div class="detail-head" data-scan-status="{{ scan.pk }}">
+  <div><h2>{{ scan.project.name }} <span style="color:var(--muted)">· #{{ scan.pk }}</span></h2><p>Triggered by {{ scan.triggered_by.username }} · {{ scan.created_at|date:"M d, Y H:i" }}</p></div>
+  <span class="tag {{ scan.status|lower }}" id="scanStatusBadge">{{ scan.status }}</span>
+</div>
+
+{% if scan.status == 'FAILED' %}
+<div class="alert error"><strong>Scan failed:</strong> {{ scan.error_message }}</div>
+{% endif %}
+{% if scan.status in 'PENDING,RUNNING' %}
+<div class="alert">Scan is still processing. This page refreshes automatically when analysis completes.</div>
+{% endif %}
+
+<div class="grid grid-4">
+  <div class="card metric-card"><span class="metric-label">Risk score</span><span class="metric-value" style="color:var(--orange)">{{ scan.risk_score }}</span><span class="metric-label">0 — 100</span></div>
+  <div class="card metric-card"><span class="metric-label">Health score</span><span class="metric-value" style="color:var(--green)">{{ scan.health_score }}</span><span class="metric-label">0 — 100</span></div>
+  <div class="card metric-card"><span class="metric-label">Dependencies</span><span class="metric-value">{{ scan.summary.dependencies_discovered|default:0 }}</span><span class="metric-label">Resolved components</span></div>
+  <div class="card metric-card"><span class="metric-label">Advisories</span><span class="metric-value" style="color:var(--red)">{{ scan.summary.vulnerabilities.total|default:0 }}</span><span class="metric-label">{{ scan.summary.vulnerabilities.critical_cves|default:0 }} critical CVEs</span></div>
+</div>
+
+<div class="tabs" style="margin-top:20px">
+  <a href="#overview" class="active">Overview</a><a href="#vulnerabilities">Vulnerabilities</a><a href="#graph">Dependency Graph</a><a href="#recommendations">Recommendations</a><a href="#licenses">Licenses</a><a href="#sources">Intel Sources</a>
+</div>
+
+<section class="card" id="overview">
+  <div class="card-header"><div><h3 class="card-title">Scan overview</h3><p class="card-sub">Real data recorded during this assessment</p></div>
+    <div><a class="ghost-button small" href="{% url 'reports:pdf' scan.pk %}">PDF report</a> <a class="ghost-button small" href="{% url 'reports:sbom' scan.pk %}">SBOM JSON</a> <a class="ghost-button small" href="{% url 'reports:csv' scan.pk %}">CSV</a></div>
+  </div>
+  {% if scan.status == 'COMPLETED' %}
+  <div class="grid grid-3">
+    <div class="chart-box"><canvas data-chart='{"type":"doughnut","data":{"labels":["Critical","High","Medium","Low","Unknown"],"datasets":[{"data":[{{ scan.summary.vulnerabilities.by_severity.CRITICAL|default:0 }},{{ scan.summary.vulnerabilities.by_severity.HIGH|default:0 }},{{ scan.summary.vulnerabilities.by_severity.MEDIUM|default:0 }},{{ scan.summary.vulnerabilities.by_severity.LOW|default:0 }},{{ scan.summary.vulnerabilities.by_severity.UNKNOWN|default:0 }}],"backgroundColor":["#ff5d6c","#ffa63d","#c9a227","#36d399","#5aa9ff"],"borderWidth":0}]}}'></canvas></div>
+    <div class="mini-list">
+      <div class="mini-row"><span>Graph nodes</span><span>{{ scan.graph_metrics.node_count|default:0 }}</span></div>
+      <div class="mini-row"><span>Graph edges</span><span>{{ scan.graph_metrics.edge_count|default:0 }}</span></div>
+      <div class="mini-row"><span>Transitive depth</span><span>{{ scan.graph_metrics.max_depth|default:0 }}</span></div>
+      <div class="mini-row"><span>Risk signals</span><span>{{ scan.risk_signals.count }}</span></div>
+    </div>
+    <div class="mini-list">
+      <div class="mini-row"><span>SBOM spec</span><span>CycloneDX {{ scan.sbom.spec_version|default:"—" }}</span></div>
+      <div class="mini-row"><span>SBOM SHA-256</span><span>{{ scan.sbom.sha256|default:"—"|slice:":12" }}</span></div>
+      <div class="mini-row"><span>Duration</span><span>{{ scan.duration_seconds|default:"—" }}s</span></div>
+      <div class="mini-row"><span>Advisory DBs</span><span>{{ scan.sources.databases|join:", "|default:"—" }}</span></div>
+    </div>
+  </div>
+  {% else %}<div class="empty">Detailed results appear when the scan completes.</div>{% endif %}
+</section>
+
+<section class="card" id="vulnerabilities" style="margin-top:18px">
+  <div class="card-header"><div><h3 class="card-title">Vulnerability findings</h3><p class="card-sub">Advisory IDs, severity and database source are shown verbatim</p></div></div>
+  {% if vulnerabilities %}
+  <div class="table-wrap"><table class="data"><thead><tr><th>Advisory</th><th>Package</th><th>Severity</th><th>CVSS</th><th>Source</th><th>Fix</th><th>Path</th></tr></thead><tbody>
+    {% for vuln in vulnerabilities %}
+    <tr><td><strong>{{ vuln.cve_or_id }}</strong>{% if vuln.vuln_id != vuln.cve_id %}<br><small style="color:var(--muted)">{{ vuln.vuln_id }}</small>{% endif %}</td>
+      <td>{{ vuln.package_name }} {{ vuln.package_version }}<br><small style="color:var(--muted)">{% if vuln.is_direct %}direct{% else %}transitive{% endif %} · {{ vuln.ecosystem }}</small></td>
+      <td><span class="tag {{ vuln.severity|lower }}">{{ vuln.severity }}</span></td><td>{{ vuln.cvss_score|default:"—" }}</td>
+      <td>{{ vuln.sources|join:"+"|default:vuln.source }}</td><td>{{ vuln.fixed_versions|join:", "|default:"—" }}</td>
+      <td><a href="{{ vuln.source_url }}" target="_blank" rel="noopener">Advisory ↗</a></td></tr>
+    {% endfor %}
+  </tbody></table></div>
+  {% else %}<div class="empty">No advisory matches recorded for this scan.</div>{% endif %}
+</section>
+
+<section class="card" id="graph" style="margin-top:18px">
+  <div class="card-header"><div><h3 class="card-title">3D dependency network</h3><p class="card-sub">Drag to rotate · red nodes have verified advisories</p></div><span class="legend"><span><i class="dot gold"></i>Direct</span><span><i class="dot blue"></i>Transitive</span><span><i class="dot red"></i>Vulnerable</span></span></div>
+  {% if scan.status == 'COMPLETED' %}
+  <div class="orbit-wrap"><div id="networkStage" data-source="{% url 'reports:graph' scan.pk %}"></div><div class="canvas-caption">NetworkX · Three.js · Live scan data</div></div>
+  {% if scan.graph_metrics.vulnerable_paths %}<div class="code-block">{% for path in scan.graph_metrics.vulnerable_paths %}{{ path.package }} [{{ path.severity }}]: {{ path.path|join:" → " }}
+{% endfor %}</div>{% endif %}
+  {% else %}<div class="empty">Graph available after scan completion.</div>{% endif %}
+</section>
+
+<section class="card" id="recommendations" style="margin-top:18px">
+  <div class="card-header"><div><h3 class="card-title">Remediation recommendations</h3><p class="card-sub">Rule engine grounded in recorded findings{% if 'OPENAI' in scan.summary.ai_recommendations.provider %} · AI summary enabled{% endif %}</p></div></div>
+  {% for rec in recommendations %}<div class="reco"><h4><span class="tag {{ rec.priority|lower }}">{{ rec.priority }}</span> {{ rec.title }}</h4><p>{{ rec.explanation }}</p>{% if rec.upgrade_steps %}<ol>{% for step in rec.upgrade_steps %}<li>{{ step }}</li>{% endfor %}</ol>{% endif %}{% if rec.risks %}<p style="margin-top:8px;color:var(--orange)"><strong>Upgrade risk:</strong> {{ rec.risks }}</p>{% endif %}</div>{% empty %}<div class="empty">No recommendations generated.</div>{% endfor %}
+</section>
+
+<section class="card" id="licenses" style="margin-top:18px">
+  <div class="card-header"><div><h3 class="card-title">License compliance</h3><p class="card-sub">SPDX classification and review flags</p></div></div>
+  {% if license_records %}<div class="table-wrap"><table class="data"><thead><tr><th>Package</th><th>License</th><th>Category</th><th>Review</th><th>Reason</th></tr></thead><tbody>
+    {% for record in license_records %}<tr><td>{{ record.package_name }} {{ record.version }}</td><td>{{ record.spdx_id|default:record.license_id|default:"—" }}</td><td><span class="tag">{{ record.category }}</span></td><td>{% if record.requires_review %}<span class="tag high">REVIEW</span>{% else %}<span class="tag low">OK</span>{% endif %}</td><td style="color:var(--muted)">{{ record.reason|default:"—" }}</td></tr>{% endfor %}
+  </tbody></table></div>{% else %}<div class="empty">No license records for this scan.</div>{% endif %}
+</section>
+
+<section class="card" id="sources" style="margin-top:18px">
+  <div class="card-header"><div><h3 class="card-title">Intelligence sources</h3><p class="card-sub">Every source queried for this scan is recorded</p></div></div>
+  <dl class="kv"><dt>Databases</dt><dd>{{ scan.sources.databases|join:", "|default:"None" }}</dd><dt>Tools</dt><dd>{{ scan.sources.tools|join:", "|default:"None" }}</dd><dt>Enrichment</dt><dd>{{ scan.sources.enrichment|default:"—" }}</dd></dl>
+  {% if scan.sources.source_status %}<div class="table-wrap" style="margin-top:14px"><table class="data"><thead><tr><th>Source</th><th>Status</th><th>Message</th><th>Last success</th></tr></thead><tbody>{% for source in scan.sources.source_status %}<tr><td>{{ source.name }}</td><td><span class="tag {{ source.status|lower }}">{{ source.status }}</span></td><td>{{ source.message|default:"—" }}</td><td>{{ source.last_success|default:"—" }}</td></tr>{% endfor %}</tbody></table></div>{% endif %}
+  {% if scan.summary.warnings %}<div class="code-block" style="margin-top:14px">{% for warning in scan.summary.warnings %}{{ warning }}
+{% endfor %}</div>{% endif %}
+</section>
+{% endblock %}

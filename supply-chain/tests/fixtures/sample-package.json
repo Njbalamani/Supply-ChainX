@@ -1,0 +1,15 @@
+{
+  "name": "sample-app",
+  "version": "1.0.0",
+  "dependencies": {
+    "express": "4.18.2",
+    "axios": "^1.6.0",
+    "safe-alias": "npm:lodash@4.17.21"
+  },
+  "devDependencies": {
+    "jest": "^29.0.0"
+  },
+  "optionalDependencies": {
+    "fsevents": "2.3.3"
+  }
+}

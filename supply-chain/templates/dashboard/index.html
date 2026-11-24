@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard{% endblock %}
+{% block page_title %}Security Posture Overview{% endblock %}
+{% block content %}
+<div class="stack">
+  <div class="grid grid-hero">
+    <section class="card hero-card">
+      <span class="hero-badge">LIVE SUPPLY CHAIN INTELLIGENCE</span>
+      <h2>See every dependency.<br>Understand every risk.</h2>
+      <p>Continuous SBOM generation, advisory matching and dependency graph analysis across Python, Node.js and Java projects — backed by OSV.dev and NVD intelligence.</p>
+      <div class="hero-actions">
+        <a class="gold-button" href="{% url 'projects:list' %}">Scan a project</a>
+        <a class="ghost-button" href="{% url 'docs:architecture' %}">View architecture</a>
+      </div>
+    </section>
+    <section class="card">
+      <div class="card-header"><h3 class="card-title">Supply chain health</h3><span class="card-sub">Average of completed scans</span></div>
+      <div class="score-ring" style="--score: {{ health_score }}"><div class="score-value"><strong>{{ health_score }}</strong><small>Health score</small></div></div>
+      <div class="mini-list">
+        <div class="mini-row"><span>Aggregate risk</span><span>{{ risk_score }}/100</span></div>
+        <div class="mini-row"><span>Critical CVEs</span><span>{{ critical_cves }}</span></div>
+        <div class="mini-row"><span>Vulnerable packages</span><span>{{ vulnerable_packages }}</span></div>
+      </div>
+    </section>
+  </div>
+
+  <div class="grid grid-4">
+    <div class="card metric-card"><div class="metric-top"><span class="metric-label">Projects</span><span class="metric-icon"><svg viewBox="0 0 24 24"><path d="M3 7h6l2 2h10v10H3V7Z"/></svg></span></div><span class="metric-value">{{ total_projects }}</span><span class="metric-label">Registered repositories</span><div class="metric-delta">{{ running_scans }} scan{{ running_scans|pluralize }} running</div></div>
+    <div class="card metric-card"><div class="metric-top"><span class="metric-label">Dependencies</span><span class="metric-icon"><svg viewBox="0 0 24 24"><path d="M8 4h8v4H8V4ZM4 10h6v4H4v-4Zm10 0h6v4h-6v-4ZM8 16h8v4H8v-4Z"/></svg></span></div><span class="metric-value">{{ total_dependencies }}</span><span class="metric-label">Resolved components</span><div class="metric-delta">{{ completed_scans }} completed scans</div></div>
+    <div class="card metric-card"><div class="metric-top"><span class="metric-label">Vulnerable</span><span class="metric-icon" style="color:var(--red);border-color:rgba(255,93,108,.3);background:rgba(255,93,108,.08)"><svg viewBox="0 0 24 24"><path d="M12 2 1 21h22L12 2Zm0 6 6.5 11h-13L12 8Zm-1 4h2v4h-2v-4Zm0 5h2v2h-2v-2Z"/></svg></span></div><span class="metric-value" style="color:var(--red)">{{ vulnerable_packages }}</span><span class="metric-label">Packages with advisories</span><div class="metric-delta" style="color:var(--orange)">{{ critical_cves }} critical CVEs</div></div>
+    <div class="card metric-card"><div class="metric-top"><span class="metric-label">Scans</span><span class="metric-icon" style="color:var(--blue);border-color:rgba(90,169,255,.3);background:rgba(90,169,255,.08)"><svg viewBox="0 0 24 24"><path d="M4 4h16v16H4V4Zm2 2v12h12V6H6Zm2 2h8v2H8V8Zm0 4h8v2H8v-2Z"/></svg></span></div><span class="metric-value">{{ total_scans }}</span><span class="metric-label">Total scan history</span><div class="metric-delta" style="color:var(--muted)">{{ failed_scans }} failed</div></div>
+  </div>
+
+  <div class="grid grid-2">
+    <section class="card">
+      <div class="card-header"><div><h3 class="card-title">Scan activity</h3><p class="card-sub">Last 14 days</p></div></div>
+      <div class="chart-box"><canvas data-chart='{{ activity_chart|escape }}'></canvas></div>
+    </section>
+    <section class="card">
+      <div class="card-header"><div><h3 class="card-title">Advisory severity mix</h3><p class="card-sub">From verified vulnerability sources</p></div></div>
+      <div class="chart-box"><canvas data-chart='{{ severity_chart|escape }}'></canvas></div>
+    </section>
+  </div>
+
+  <div class="grid grid-2">
+    <section class="card">
+      <div class="card-header"><div><h3 class="card-title">Ecosystem distribution</h3><p class="card-sub">Discovered components by ecosystem</p></div></div>
+      <div class="chart-box"><canvas data-chart='{{ ecosystem_chart|escape }}'></canvas></div>
+    </section>
+    <section class="card">
+      <div class="card-header"><div><h3 class="card-title">Recent scans</h3><p class="card-sub">Latest supply chain assessments</p></div><a class="ghost-button small" href="{% url 'projects:list' %}">All projects</a></div>
+      {% if recent_scans %}
+      <div class="table-wrap"><table class="data"><thead><tr><th>Project</th><th>Status</th><th>Risk</th><th>Created</th></tr></thead><tbody>
+        {% for scan in recent_scans %}<tr><td><a href="{% url 'scans:detail' scan.pk %}"><strong>{{ scan.project.name }}</strong></a><br><small style="color:var(--muted)">#{{ scan.pk }}</small></td><td><span class="tag {{ scan.status|lower }}">{{ scan.status }}</span></td><td>{{ scan.risk_score }}</td><td>{{ scan.created_at|date:"M d, H:i" }}</td></tr>{% endfor %}
+      </tbody></table></div>
+      {% else %}<div class="empty">No scans yet. Register a project and upload a source archive to begin.</div>{% endif %}
+    </section>
+  </div>
+</div>
+{% endblock %}

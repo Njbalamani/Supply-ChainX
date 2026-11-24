@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+{% block title %}{{ organization.name }}{% endblock %}
+{% block page_title %}{{ organization.name }}{% endblock %}
+{% block content %}
+<div class="crumb"><a href="{% url 'organizations:list' %}">Organizations</a> <span>/</span> <span>{{ organization.name }}</span></div>
+<div class="detail-head"><div><h2>{{ organization.name }}</h2><p>{{ organization.description|default:"No description provided." }}</p></div>{% if can_edit %}<a class="gold-button" href="{% url 'projects:create' organization.pk %}">Add project</a>{% endif %}</div>
+<div class="grid grid-2">
+  <section class="card">
+    <div class="card-header"><h3 class="card-title">Members</h3><span class="card-sub">Role-based access control</span></div>
+    <div class="table-wrap"><table class="data"><thead><tr><th>User</th><th>Role</th><th>Joined</th></tr></thead><tbody>
+      {% for member in members %}<tr><td><strong>{{ member.user.username }}</strong><br><small style="color:var(--muted)">{{ member.user.email }}</small></td><td><span class="tag">{{ member.get_role_display }}</span></td><td>{{ member.joined_at|date:"M d, Y" }}</td></tr>{% endfor %}
+    </tbody></table></div>
+  </section>
+  <section class="card">
+    <div class="card-header"><h3 class="card-title">Projects</h3><span class="card-sub">{{ projects.count }} registered</span></div>
+    {% for project in projects %}
+    <div class="mini-row"><a href="{% url 'projects:detail' project.pk %}"><strong>{{ project.name }}</strong></a><span>{{ project.get_ecosystem_display }} · {{ project.scans.count }} scans</span></div>
+    {% empty %}<div class="empty">No projects in this organization.</div>{% endfor %}
+  </section>
+</div>
+{% endblock %}

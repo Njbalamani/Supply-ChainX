@@ -1,0 +1,7 @@
+requirements==2.31.0
+Django>=4.2,<7
+requests[security]==2.34.2 ; python_version >= "3.10"
+# a comment
+-r base.txt
+-e ./local-package
+ bottle==0.12.25  # inline comment
